@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 1
+local MAJOR, MINOR = 'LibMovable-1.0', 2
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -298,14 +298,14 @@ lib.__iterators = lib.__iterators or {}
 setmetatable(lib.__iterators, {
 	__index = function(iterators, key)
 		local iterator = function(overlays, target)
-			local nextTarget, nextOverlay
+			local overlay
 			repeat
-				nextTarget, nextOverlay = next(overlays, target)
-				if not nextTarget then
+				target, overlay = next(overlays, target)
+				if not target then
 					return
 				end
-			until nextOverlay.key == key
-			return nextTarget, nextOverlay
+			until overlay.key == key
+			return target, overlay
 		end
 		iterators[key] = iterator
 		return iterator
