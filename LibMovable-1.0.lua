@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 2
+local MAJOR, MINOR = 'LibMovable-1.0', 3
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -83,15 +83,33 @@ function proto.ApplyLayout(overlay)
 	overlay.dirty = not SetFrameLayout(target, db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset)
 end
 
+function proto.MovingUpdater(overlay)
+	local lockedX, lockedY = overlay.lockedX, overlay.lockedY
+	if lockedX or lockedY then
+		local from, ref, to, x, y = overlay.target:GetPoint()
+		overlay.target:SetPoint(from, ref, to, lockedX or x, lockedY or y)
+	end
+	overlay.Text:SetFormattedText("%s (X:%d, Y:%d)", overlay.label, overlay.target:GetCenter())
+end
+
 function proto.StartMoving(overlay)
 	if overlay.isMoving or (overlay.protected and InCombatLockdown()) then return end
 	overlay.target:SetMovable(true)
 	overlay.target:StartMoving()
+	if IsShiftKeyDown() then
+		overlay.lockedX = select(4, overlay.target:GetPoint())
+	elseif IsControlKeyDown() then
+		overlay.lockedY = select(5, overlay.target:GetPoint())
+	end
+	overlay:SetScript('OnUpdate', overlay.MovingUpdater)
 	overlay.isMoving = true
 end
 
 function proto.StopMoving(overlay)
 	if not overlay.isMoving or (overlay.protected and InCombatLockdown()) then return end
+	overlay.lockedX, overlay.lockedY = nil, nil
+	overlay.Text:SetText(overlay.label)
+	overlay:SetScript('OnUpdate', nil)
 	overlay.target:StopMovingOrSizing()
 	overlay.target:SetMovable(false)
 	overlay.isMoving = nil
@@ -166,9 +184,12 @@ function proto.OnEnter(overlay)
 	GameTooltip_SetDefaultAnchor(GameTooltip, overlay)
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine(overlay.label)
-	GameTooltip:AddLine("Drag this using the left mouse button.", 1, 1, 1)
-	GameTooltip:AddLine("Use the mousewheel to change the size.", 1, 1, 1)
-	GameTooltip:AddLine("Hold Alt and right click to reset to defaults.", 1, 1, 1)
+	GameTooltip:AddLine("Controls:", 1, 1, 1)
+	GameTooltip:AddLine("Drag: move.", 1, 1, 1)
+	GameTooltip:AddLine("Shift+drag: move vertically.", 1, 1, 1)
+	GameTooltip:AddLine("Ctrl+drag: move horizontally.", 1, 1, 1)
+	GameTooltip:AddLine("Mousewheel: change scale.", 1, 1, 1)
+	GameTooltip:AddLine("Alt+right-click: move to default position.", 1, 1, 1)
 	GameTooltip:Show()
 end
 
@@ -266,6 +287,7 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 			text:SetJustifyH("CENTER")
 			text:SetJustifyV("MIDDLE")
 			text:SetText(label)
+			overlay.Text = text
 		end
 
 		overlay.label = label
