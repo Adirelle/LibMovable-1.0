@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 4
+local MAJOR, MINOR = 'LibMovable-1.0', 5
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -212,21 +212,21 @@ end
 -- Menu definition and method
 
 local menuOverlay
-local menuFrame = _G.DropDownList1
 local menu = {
-	{ isTitle = true },
-	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end },
-	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end },
-	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end },
-	{ text = L_MENU_HIDE_THIS, func = function() menuOverlay:Hide() end },
-	{ text = L_MENU_HIDE_ALL, func = function() lib.Lock() end },
-	{ text = CANCEL }
+	{ isTitle = true, notCheckable = true },
+	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end, notCheckable = true },
+	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end, notCheckable = true },
+	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end, notCheckable = true },
+	{ text = L_MENU_HIDE_THIS, func = function() menuOverlay:Hide() end, notCheckable = true },
+	{ text = L_MENU_HIDE_ALL, func = function() lib.Lock() end, notCheckable = true },
+	{ text = CANCEL, notCheckable = true }
 }
 
 function proto.OpenMenu(overlay)
+	lib.menuFrame = lib.menuFrame or CreateFrame("Frame", "LibMovable10MenuDropDown", UIParent, "UIDropDownMenuTemplate")
 	menuOverlay = overlay
 	menu[1].text = menuOverlay.label
-	EasyMenu(menu, menuFrame, "cursor", 0, 0)
+	EasyMenu(menu, lib.menuFrame, "cursor", 0, 0, "MENU")
 end
 
 -- Overlay event handlers
