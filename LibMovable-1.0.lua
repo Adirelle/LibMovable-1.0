@@ -73,6 +73,12 @@ lib.meta.__index = lib.proto
 local proto = lib.proto
 wipe(proto)
 
+function proto.UpgradeOverlay(overlay)
+	if (overlay.version or 0) >= MINOR then return end
+	overlay:SetScripts()
+	overlay.version = MINOR
+end
+
 function proto.UpdateDatabase(overlay)
 	local db, target = overlay.db, overlay.target
 	db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset = GetFrameLayout(target)
@@ -267,35 +273,15 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 		db = {}
 	end
 
-	overlaysToBe[target] = function(testKey)
-		if (testKey and testKey ~= key) then return end
-		local overlay = setmetatable(CreateFrame("Frame", nil, UIParent), lib.meta)
-		overlaysToBe[target] = nil
-		overlays[target] = overlay
-
-		overlay:SetFrameStrata("HIGH")
-		overlay:SetBackdrop(overlayBackdrop)
-		overlay:SetBackdropBorderColor(0,0,0,0)
-		overlay:SetAllPoints(anchor or target)
-		overlay:RegisterEvent("PLAYER_LOGOUT")
-		overlay:SetScripts()
-		overlay:Hide()
-
-		if label then
-			local text = overlay:CreateFontString(nil, "ARTWORK", "GameFontWhite")
-			text:SetAllPoints(overlay)
-			text:SetJustifyH("CENTER")
-			text:SetJustifyV("MIDDLE")
-			text:SetText(label)
-			overlay.Text = text
-		end
-
-		overlay.label = label
-		overlay.target = target
-		overlay.db = db
-		overlay.key = key
-		overlay.protected = protected
-		overlay.defaults = {
+	overlaysToBe[target] = {
+		version = MINOR,
+		label = label,
+		anchor = anchor or target,
+		target = target,
+		db = db,
+		key = key,
+		protected = protected,
+		defaults = {
 			scale = scale,
 			pointFrom = pointFrom,
 			refFrame = refFrame,
@@ -303,17 +289,45 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 			xOffset = xOffset,
 			yOffset = yOffset
 		}
-
-		for k, v in pairs(overlay.defaults) do
-			if db[k] == nil then
-				db[k] = v
-			end
-		end
-
-		overlay:ApplyLayout()
-	end
-
+	}
 end
+
+function lib.SpawnOverlay(data)
+	local overlay = setmetatable(CreateFrame("Frame", nil, UIParent), lib.meta)	
+	for k, v in pairs(data) do
+		overlay[k] = v
+	end	
+	overlaysToBe[overlay.target] = nil
+	overlays[overlay.target] = overlay
+
+	overlay:SetFrameStrata("HIGH")
+	overlay:SetBackdrop(overlayBackdrop)
+	overlay:SetBackdropBorderColor(0,0,0,0)
+	overlay:SetAllPoints(overlay.anchor)
+	overlay:RegisterEvent("PLAYER_LOGOUT")
+	overlay:SetScripts()
+	overlay:Hide()
+
+	local text = overlay:CreateFontString(nil, "ARTWORK", "GameFontWhite")
+	text:SetAllPoints(overlay)
+	text:SetJustifyH("CENTER")
+	text:SetJustifyV("MIDDLE")
+	text:SetText(overlay.label)
+	overlay.Text = text
+
+	for k, v in pairs(overlay.defaults) do
+		if overlay.db[k] == nil then
+			overlay.db[k] = v
+		end
+	end
+	
+	-- Upgrade overlay at spawn time if the data has been created with previous versions
+	if overlay.version < MINOR then
+		overlay:UpgradeOverlay()
+	end
+end
+
+-- Overlay iterator
 
 lib.__iterators = lib.__iterators or {}
 
@@ -342,6 +356,8 @@ function lib.IterateOverlays(key)
 	end
 end
 
+-- (Un)locking related methods
+
 function lib.Lock(key)
 	for target, overlay in lib.IterateOverlays(key) do
 		overlay:Hide()
@@ -349,8 +365,15 @@ function lib.Lock(key)
 end
 
 function lib.Unlock(key)
-	for target, spawnFunc in pairs(overlaysToBe) do
-		spawnFunc(key)
+	for target, data in pairs(overlaysToBe) do
+		if type(data) == "function" then
+			data(key)
+			if overlays[target] then
+				overlays[target]:UpgradeOverlay()
+			end
+		elseif not key or data.key == key then
+			lib.SpawnOverlay(data)
+		end
 	end
 	for target, overlay in lib.IterateOverlays(key) do
 		overlay:Show()
@@ -400,7 +423,7 @@ for target in pairs(embeds) do
 end
 
 for target, overlay in pairs(overlays) do
-	overlay:SetScripts()
+	overlay:UpgradeOverlay()
 end
 
 -- ConfigMode support
