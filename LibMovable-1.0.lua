@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 3
+local MAJOR, MINOR = 'LibMovable-1.0', 4
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -92,13 +92,13 @@ function proto.MovingUpdater(overlay)
 	overlay.Text:SetFormattedText("%s (X:%d, Y:%d)", overlay.label, overlay.target:GetCenter())
 end
 
-function proto.StartMoving(overlay)
+function proto.StartMoving(overlay, lock)
 	if overlay.isMoving or (overlay.protected and InCombatLockdown()) then return end
 	overlay.target:SetMovable(true)
 	overlay.target:StartMoving()
-	if IsShiftKeyDown() then
+	if lock == "X" then
 		overlay.lockedX = select(4, overlay.target:GetPoint())
-	elseif IsControlKeyDown() then
+	elseif lock == "Y" then
 		overlay.lockedY = select(5, overlay.target:GetPoint())
 	end
 	overlay:SetScript('OnUpdate', overlay.MovingUpdater)
@@ -220,7 +220,7 @@ end
 
 function proto.OnMouseDown(overlay, button)
 	if button == "LeftButton" then
-		overlay:StartMoving()
+		overlay:StartMoving((IsShiftKeyDown() and "X") or (IsControlKeyDown() and "Y"))
 	end
 end
 
