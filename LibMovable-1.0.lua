@@ -9,6 +9,29 @@ local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
 
+-- Localization
+L_MENU_RESET = "Reset to default position"
+L_MENU_HIDE_THIS = "Hide this moving handle"
+L_MENU_HIDE_ALL = "Hide all moving handles"
+L_TIP_CONTROLS = "Controls:"
+L_TIP_DRAG ="Drag: move."
+L_TIP_SHIFT_DRAG = "Shift+drag: move vertically."
+L_TIP_CTRL_DRAG = "Control+drag: move horizontally."
+L_TIP_MOUSEWHEEL = "Mousewheel: change scale."
+L_TIP_RIGHT_CLICK = "Right-click: open menu."
+
+if GetLocale() == "frFR" then
+	L_MENU_RESET = "Remettre en position par défaut"
+	L_MENU_HIDE_THIS = "Cacher cette poignée"
+	L_MENU_HIDE_ALL = "Tout cacher"
+	L_TIP_CONTROLS = "Contrôles :"
+	L_TIP_DRAG ="Tirer: déplacer."
+	L_TIP_SHIFT_DRAG = "Tirer en pressant Maj: déplacer verticalement."
+	L_TIP_CTRL_DRAG = "Tirer en pressant Ctrl: déplacer horizontalement."
+	L_TIP_MOUSEWHEEL = "Molette de la souris: changer l'échelle d'affichage."
+	L_TIP_RIGHT_CLICK = "Clic droit: ouvrir le menu."
+end
+		
 -- Frame layout helpers
 
 local function GetFrameLayout(frame)
@@ -162,6 +185,24 @@ function proto.SetScripts(overlay)
 	end
 end
 
+-- Menu definition and method
+
+local menuOverlay
+local menuFrame = _G.DropDownList1
+local menu = {
+	{ isTitle = true },
+	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end },
+	{ text = L_MENU_HIDE_THIS, func = function() menuOverlay:Hide() end },
+	{ text = L_MENU_HIDE_ALL, func = function() lib.Lock() end },
+	{ text = CANCEL }
+}
+
+function proto.OpenMenu(overlay)
+	menuOverlay = overlay
+	menu[1].text = menuOverlay.label
+	EasyMenu(menu, menuFrame, "cursor", 0, 0)
+end
+
 -- Overlay event handlers
 
 function proto.PLAYER_REGEN_ENABLED(overlay)
@@ -190,12 +231,12 @@ function proto.OnEnter(overlay)
 	GameTooltip_SetDefaultAnchor(GameTooltip, overlay)
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine(overlay.label)
-	GameTooltip:AddLine("Controls:", 1, 1, 1)
-	GameTooltip:AddLine("Drag: move.", 1, 1, 1)
-	GameTooltip:AddLine("Shift+drag: move vertically.", 1, 1, 1)
-	GameTooltip:AddLine("Ctrl+drag: move horizontally.", 1, 1, 1)
-	GameTooltip:AddLine("Mousewheel: change scale.", 1, 1, 1)
-	GameTooltip:AddLine("Alt+right-click: move to default position.", 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_CONTROLS, 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_DRAG, 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_SHIFT_DRAG, 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_CTRL_DRAG, 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_MOUSEWHEEL, 1, 1, 1)
+	GameTooltip:AddLine(L_TIP_RIGHT_CLICK, 1, 1, 1)
 	GameTooltip:Show()
 end
 
@@ -214,6 +255,7 @@ function proto.OnShow(overlay)
 end
 
 function proto.OnHide(overlay)
+	overlay:StopMoving()
 	if overlay.protected then
 		overlay:UnregisterEvent("PLAYER_REGEN_DISABLED")
 		overlay:UnregisterEvent("PLAYER_REGEN_ENABLED")
@@ -233,8 +275,8 @@ end
 function proto.OnMouseUp(overlay, button)
 	if button == "LeftButton" then
 		overlay:StopMoving()
-	elseif button == "RightButton" and IsAltKeyDown() then
-		overlay:ResetLayout()
+	elseif button == "RightButton" then
+		overlay:OpenMenu()
 	end
 end
 
@@ -293,14 +335,17 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 end
 
 function lib.SpawnOverlay(data)
+	local target = data.target
+
 	local overlay = setmetatable(CreateFrame("Frame", nil, UIParent), lib.meta)	
 	for k, v in pairs(data) do
 		overlay[k] = v
 	end	
-	overlaysToBe[overlay.target] = nil
-	overlays[overlay.target] = overlay
+	overlaysToBe[target] = nil
+	overlays[target] = overlay
 
-	overlay:SetFrameStrata("HIGH")
+	overlay:SetFrameStrata("DIALOG")
+	--overlay:SetFrameLevel(target:GetFrameLevel()+5)
 	overlay:SetBackdrop(overlayBackdrop)
 	overlay:SetBackdropBorderColor(0,0,0,0)
 	overlay:SetAllPoints(overlay.anchor)
