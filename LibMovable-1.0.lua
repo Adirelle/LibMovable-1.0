@@ -10,6 +10,8 @@ if not lib then return end
 oldMinor = oldMinor or 0
 
 -- Localization
+L_MENU_CENTER_X = "Center horizontally"
+L_MENU_CENTER_Y = "Center vertically"
 L_MENU_RESET = "Reset to default position"
 L_MENU_HIDE_THIS = "Hide this moving handle"
 L_MENU_HIDE_ALL = "Hide all moving handles"
@@ -21,15 +23,17 @@ L_TIP_MOUSEWHEEL = "Mousewheel: change scale."
 L_TIP_RIGHT_CLICK = "Right-click: open menu."
 
 if GetLocale() == "frFR" then
-	L_MENU_RESET = "Remettre en position par défaut"
-	L_MENU_HIDE_THIS = "Cacher cette poignée"
+	L_MENU_CENTER_X = "Centrer horizontalement"
+	L_MENU_CENTER_Y = "Centrer verticalement"
+	L_MENU_RESET = "Réinitialiser la position"
+	L_MENU_HIDE_THIS = "Cacher"
 	L_MENU_HIDE_ALL = "Tout cacher"
 	L_TIP_CONTROLS = "Contrôles :"
-	L_TIP_DRAG ="Tirer: déplacer."
-	L_TIP_SHIFT_DRAG = "Tirer en pressant Maj: déplacer verticalement."
-	L_TIP_CTRL_DRAG = "Tirer en pressant Ctrl: déplacer horizontalement."
-	L_TIP_MOUSEWHEEL = "Molette de la souris: changer l'échelle d'affichage."
-	L_TIP_RIGHT_CLICK = "Clic droit: ouvrir le menu."
+	L_TIP_DRAG ="Tirer : déplacer."
+	L_TIP_SHIFT_DRAG = "Tirer en pressant Maj : déplacer verticalement."
+	L_TIP_CTRL_DRAG = "Tirer en pressant Ctrl : déplacer horizontalement."
+	L_TIP_MOUSEWHEEL = "Molette de la souris : changer l'échelle d'affichage."
+	L_TIP_RIGHT_CLICK = "Clic droit : ouvrir le menu."
 end
 		
 -- Frame layout helpers
@@ -96,6 +100,10 @@ lib.meta.__index = lib.proto
 local proto = lib.proto
 wipe(proto)
 
+function proto.InCombatLockdown(overlay)
+	return overlay.protected and InCombatLockdown()
+end
+
 function proto.UpgradeOverlay(overlay)
 	if (overlay.version or 0) >= MINOR then return end
 	overlay:SetScripts()
@@ -122,7 +130,7 @@ function proto.MovingUpdater(overlay)
 end
 
 function proto.StartMoving(overlay, lock)
-	if overlay.isMoving or (overlay.protected and InCombatLockdown()) then return end
+	if overlay.isMoving or overlay:InCombatLockdown() then return end
 	overlay.target:SetMovable(true)
 	overlay.target:StartMoving()
 	if lock == "X" then
@@ -135,7 +143,7 @@ function proto.StartMoving(overlay, lock)
 end
 
 function proto.StopMoving(overlay)
-	if not overlay.isMoving or (overlay.protected and InCombatLockdown()) then return end
+	if not overlay.isMoving or overlay:InCombatLockdown() then return end
 	overlay.lockedX, overlay.lockedY = nil, nil
 	overlay.Text:SetText(overlay.label)
 	overlay:SetScript('OnUpdate', nil)
@@ -146,6 +154,7 @@ function proto.StopMoving(overlay)
 end
 
 function proto.ChangeScale(overlay, delta)
+	if overlay:InCombatLockdown() then return end
 	local target = overlay.target
 	local oldScale, from, frame, to, oldX, oldY = target:GetScale(), target:GetPoint()
 	local newScale = math.max(math.min(oldScale + 0.1 * delta, 3.0), 0.2)
@@ -155,6 +164,21 @@ function proto.ChangeScale(overlay, delta)
 		target:SetPoint(from, frame, to, newX, newY)
 		overlay:UpdateDatabase()
 	end
+end
+
+function proto.MoveToCenter(overlay, centerX, centerY)
+	if overlay:InCombatLockdown() then return end
+	local target = overlay.target
+	local scaleFactor = target:GetEffectiveScale() / UIParent:GetEffectiveScale()
+	local cx, cy = target:GetCenter()
+	local from, ref, to, x, y = target:GetPoint()
+	if centerX then
+		x = x + (UIParent:GetWidth() / 2 - cx) * scaleFactor 
+	end
+	if centerY then
+		y = y + (UIParent:GetHeight() / 2 - cy) * scaleFactor
+	end
+	target:SetPoint(from, ref, to, x, y)
 end
 
 function proto.ResetLayout(overlay)
@@ -191,6 +215,8 @@ local menuOverlay
 local menuFrame = _G.DropDownList1
 local menu = {
 	{ isTitle = true },
+	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end },
+	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end },
 	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end },
 	{ text = L_MENU_HIDE_THIS, func = function() menuOverlay:Hide() end },
 	{ text = L_MENU_HIDE_ALL, func = function() lib.Lock() end },
@@ -276,6 +302,7 @@ function proto.OnMouseUp(overlay, button)
 	if button == "LeftButton" then
 		overlay:StopMoving()
 	elseif button == "RightButton" then
+		overlay:StopMoving()
 		overlay:OpenMenu()
 	end
 end
@@ -345,7 +372,6 @@ function lib.SpawnOverlay(data)
 	overlays[target] = overlay
 
 	overlay:SetFrameStrata("DIALOG")
-	--overlay:SetFrameLevel(target:GetFrameLevel()+5)
 	overlay:SetBackdrop(overlayBackdrop)
 	overlay:SetBackdropBorderColor(0,0,0,0)
 	overlay:SetAllPoints(overlay.anchor)
@@ -358,6 +384,8 @@ function lib.SpawnOverlay(data)
 	text:SetJustifyH("CENTER")
 	text:SetJustifyV("MIDDLE")
 	text:SetText(overlay.label)
+	text:SetShadowColor(0,0,0,1)
+	text:SetShadowOffset(1, -1)
 	overlay.Text = text
 
 	for k, v in pairs(overlay.defaults) do
