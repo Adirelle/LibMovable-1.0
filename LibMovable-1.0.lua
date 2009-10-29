@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 5
+local MAJOR, MINOR = 'LibMovable-1.0', 6
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -169,16 +169,30 @@ end
 function proto.MoveToCenter(overlay, centerX, centerY)
 	if overlay:InCombatLockdown() then return end
 	local target = overlay.target
-	local scaleFactor = target:GetEffectiveScale() / UIParent:GetEffectiveScale()
-	local cx, cy = target:GetCenter()
-	local from, ref, to, x, y = target:GetPoint()
-	if centerX then
-		x = x + (UIParent:GetWidth() / 2 - cx) * scaleFactor 
+	local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+	local scale, cx, cy = target:GetEffectiveScale() / UIParent:GetEffectiveScale(), target:GetCenter()
+	cx, cy = cx * scale, cy * scale
+	if centerX then cx = screenWidth / 2 end
+	if centerY then cy = screenHeight / 2 end
+	local point = ""
+	if cy < screenHeight / 3 then
+		point, cy = "BOTTOM", cy - target:GetHeight() / 2
+	elseif cy > screenHeight * 2 / 3 then
+		point, cy = "TOP", cy + target:GetHeight() / 2 - screenHeight
+	else
+		cy = cy - screenHeight / 2 
 	end
-	if centerY then
-		y = y + (UIParent:GetHeight() / 2 - cy) * scaleFactor
+	if cx < screenWidth / 3 then
+		point, cx = point .. "LEFT", cx - target:GetWidth() / 2
+	elseif cy > screenWidth * 2 / 3 then
+		point, cx = point .. "RIGHT", cx + target:GetWidth() / 2 - screenWidth
+	else
+		cx = cx - screenWidth / 2
 	end
-	target:SetPoint(from, ref, to, x, y)
+	if point == "" then point = "CENTER" end
+	target:ClearAllPoints()
+	target:SetPoint(point, UIParent, point, cx / scale, cy / scale)
+	overlay:UpdateDatabase()
 end
 
 function proto.ResetLayout(overlay)
