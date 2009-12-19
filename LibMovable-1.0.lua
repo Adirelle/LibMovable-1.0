@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 6
+local MAJOR, MINOR = 'LibMovable-1.0', 7
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -40,8 +40,8 @@ end
 
 local function GetFrameLayout(frame)
 	local scale, pointFrom, refFrame, pointTo, xOffset, yOffset = frame:GetScale(), frame:GetPoint()
-	if refFrame == frame:GetParent() then
-		refFrame = nil
+	if refFrame == frame:GetParent() or refFrame == nil then
+		refFrame = frame:GetParent():GetName() or "__parent"
 	elseif refFrame then
 		refFrame = refFrame:GetName()
 		if not refFrame then
@@ -52,7 +52,11 @@ local function GetFrameLayout(frame)
 end
 
 local function __SetFrameLayout(frame, scale, pointFrom, refFrame, pointTo, xOffset, yOffset)
-	refFrame = refFrame and _G[refFrame] or frame:GetParent()
+	if refFrame == "__parent" or not refFrame then
+		refFrame = frame:GetParent()
+	else
+		refFrame = _G[refFrame]
+	end
 	frame:ClearAllPoints()
 	frame:SetScale(scale)
 	frame:SetPoint(pointFrom, refFrame, pointTo, xOffset, yOffset)
