@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 7
+local MAJOR, MINOR = 'LibMovable-1.0', 8
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -62,31 +62,29 @@ local function __SetFrameLayout(frame, scale, pointFrom, refFrame, pointTo, xOff
 	frame:SetPoint(pointFrom, refFrame, pointTo, xOffset, yOffset)
 end
 
-local function ProcessPendingLayouts()
-	for frame, layout in pairs(lib.pendingLayouts) do
-		__SetFrameLayout(frame, unpack(layout))
+function lib.ProcessPendingLayouts()
+	for frame, t in pairs(lib.pendingLayouts) do
+		if frame:CanChangeProtectedState() then
+			__SetFrameLayout(frame, t.scale, t.pointFrom, t.refFrame, t.pointTo, t.xOffset, t.yOffset)
+			lib.pendingLayouts[frame] = nil
+		end
 	end
-	wipe(lib.pendingLayouts)
 end
 
-local function SetFrameLayout(frame, ...)
-	if frame:IsProtected() and InCombatLockdown() then
+local function SetFrameLayout(frame, scale, pointFrom, refFrame, pointTo, xOffset, yOffset)
+	if not frame:CanChangeProtectedState() then
 		if not lib.oocFrame then
+			local frame = CreateFrame("Frame")
+			frame:SetScript('OnEvent', function() return lib.ProcessPendingLayouts() end)
+			frame:RegisterEvent('PLAYER_REGEN_ENABLED')
 			lib.pendingLayouts = {}
-			lib.oocFrame = CreateFrame("Frame")
-			lib.oocFrame:SetScript('OnEvent', ProcessPendingLayouts)
-			lib.oocFrame:RegisterEvent('PLAYER_REGEN_ENABLED')
+			lib.oocFrame = frame
 		end
-		if not lib.pendingLayouts[frame] then
-			lib.pendingLayouts[frame] = { ... }
-		else
-			local l = lib.pendingLayouts[frame]
-			for i = 1, select('#', ...) do
-				l[i] = select(i, ...)
-			end
-		end
+		local t = lib.pendingLayouts[frame] or {}
+		t.scale, t.pointFrom, t.refFrame, t.pointTo, t.xOffset, t.yOffset = scale, pointFrom, refFrame, pointTo, xOffset, yOffset
+		lib.pendingLayouts[frame] = t
 	else
-		return __SetFrameLayout(frame, ...)
+		return __SetFrameLayout(frame, scale, pointFrom, refFrame, pointTo, xOffset, yOffset)
 	end
 end
 
@@ -105,7 +103,7 @@ local proto = lib.proto
 wipe(proto)
 
 function proto.InCombatLockdown(overlay)
-	return overlay.protected and InCombatLockdown()
+	return not overlay.target:CanChangeProtectedState()
 end
 
 function proto.UpgradeOverlay(overlay)
