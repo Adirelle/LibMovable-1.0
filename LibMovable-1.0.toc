@@ -5,7 +5,7 @@
 ## Author: Adirelle
 ## Version: 1.0
 
-## OptionalDeps: LibStub.lua
+## OptionalDeps: LibStub
 
 LibStub.lua
 LibMovable-1.0.lua
