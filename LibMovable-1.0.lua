@@ -4,12 +4,13 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 8
+local MAJOR, MINOR = 'LibMovable-1.0', 9
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
 
 -- Localization
+L_MENU_ENABLED = "Enabled"
 L_MENU_CENTER_X = "Center horizontally"
 L_MENU_CENTER_Y = "Center vertically"
 L_MENU_RESET = "Reset to default position"
@@ -21,8 +22,12 @@ L_TIP_SHIFT_DRAG = "Shift+drag: move vertically."
 L_TIP_CTRL_DRAG = "Control+drag: move horizontally."
 L_TIP_MOUSEWHEEL = "Mousewheel: change scale."
 L_TIP_RIGHT_CLICK = "Right-click: open menu."
+L_TIP_SHIFT_RIGHT_CLICK ="Shift+right-click: enable/disable."
+L_DISABLED = " (disabled)"
+L_IN_COMBAT_LOCKDOWN = " (locked down in combat)"
 
 if GetLocale() == "frFR" then
+	L_MENU_ENABLED = "Activé"
 	L_MENU_CENTER_X = "Centrer horizontalement"
 	L_MENU_CENTER_Y = "Centrer verticalement"
 	L_MENU_RESET = "Réinitialiser la position"
@@ -34,8 +39,11 @@ if GetLocale() == "frFR" then
 	L_TIP_CTRL_DRAG = "Tirer en pressant Ctrl : déplacer horizontalement."
 	L_TIP_MOUSEWHEEL = "Molette de la souris : changer l'échelle d'affichage."
 	L_TIP_RIGHT_CLICK = "Clic droit : ouvrir le menu."
+	L_TIP_SHIFT_RIGHT_CLICK ="Maj+clic droit: activer/désactiver."
+	L_DISABLED = " (désactivé)"	
+	L_IN_COMBAT_LOCKDOWN = " (verrouilé en combat)"
 end
-		
+
 -- Frame layout helpers
 
 local function GetFrameLayout(frame)
@@ -204,17 +212,55 @@ function proto.ResetLayout(overlay)
 	overlay:ApplyLayout()
 end
 
+function proto.UpdateDisplay(overlay)
+	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
+	if inCombat and overlay.protected then
+		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
+	elseif not overlay:IsTargetEnabled() then
+		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L_DISABLED
+	end
+	overlay:SetAlpha(alpha)
+	overlay:SetBackdropColor(r, g, b, 1)
+	overlay.Text:SetText(overlay.label..labelSuffix)
+end
+
+function proto.CanDisableTarget(overlay)
+	return overlay.canDisableTarget
+end
+
+function proto.IsTargetEnabled(overlay)
+	if overlay.canDisableTarget then
+		local ok, returnValue = pcall(overlay.target.LM10_IsEnabled, overlay.target)
+		if ok then 
+			return returnValue
+		else
+			geterrorhandler()(returnValue)
+		end
+	end
+	return true
+end
+
+function proto.ToggleTarget(overlay)
+	if overlay.canDisableTarget then
+		local func = overlay:IsTargetEnabled() and "LM10_Disable" or "LM10_Enable"
+		local ok, returnValue = pcall(overlay.target[func], overlay.target)
+		if not ok then
+			geterrorhandler()(returnValue)
+		end
+		overlay:UpdateDisplay()
+	end
+end
+
 function proto.EnableOverlay(overlay, inCombat)
 	if inCombat and overlay.protected then
 		overlay:StopMoving()
-		overlay:SetBackdropColor(1, 0, 0, 0.4)
 		overlay:EnableMouse(false)
 		overlay:EnableMouseWheel(false)
 	else
-		overlay:SetBackdropColor(0, 1, 0, 1)
 		overlay:EnableMouse(true)
 		overlay:EnableMouseWheel(true)
 	end
+	overlay:UpdateDisplay()
 end
 
 function proto.SetScripts(overlay)
@@ -230,6 +276,7 @@ end
 local menuOverlay
 local menu = {
 	{ isTitle = true, notCheckable = true },
+	{ text = false, func = function() menuOverlay:ToggleTarget() end, checked = function() return menuOverlay:IsTargetEnabled() end },
 	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end, notCheckable = true },
 	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end, notCheckable = true },
 	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end, notCheckable = true },
@@ -242,6 +289,7 @@ function proto.OpenMenu(overlay)
 	lib.menuFrame = lib.menuFrame or CreateFrame("Frame", "LibMovable10MenuDropDown", UIParent, "UIDropDownMenuTemplate")
 	menuOverlay = overlay
 	menu[1].text = menuOverlay.label
+	menu[2].text = menuOverlay:CanDisableTarget() and L_MENU_ENABLED or false
 	EasyMenu(menu, lib.menuFrame, "cursor", 0, 0, "MENU")
 end
 
@@ -279,6 +327,9 @@ function proto.OnEnter(overlay)
 	GameTooltip:AddLine(L_TIP_CTRL_DRAG, 1, 1, 1)
 	GameTooltip:AddLine(L_TIP_MOUSEWHEEL, 1, 1, 1)
 	GameTooltip:AddLine(L_TIP_RIGHT_CLICK, 1, 1, 1)
+	if overlay:CanDisableTarget() then
+		GameTooltip:AddLine(L_TIP_SHIFT_RIGHT_CLICK, 1, 1, 1)
+	end
 	GameTooltip:Show()
 end
 
@@ -319,7 +370,11 @@ function proto.OnMouseUp(overlay, button)
 		overlay:StopMoving()
 	elseif button == "RightButton" then
 		overlay:StopMoving()
-		overlay:OpenMenu()
+		if overlay:CanDisableTarget() and IsShiftKeyDown() then
+			overlay:ToggleTarget()
+		else
+			overlay:OpenMenu()
+		end
 	end
 end
 
@@ -357,7 +412,12 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 	else
 		db = {}
 	end
-
+	
+	local canDisableTarget = 
+			type(target.LM10_Enable) == "function"
+			and type(target.LM10_Disable) == "function"
+			and type(target.LM10_IsEnabled) == "function"
+	
 	overlaysToBe[target] = {
 		version = MINOR,
 		label = label,
@@ -366,6 +426,7 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 		db = db,
 		key = key,
 		protected = protected,
+		canDisableTarget = canDisableTarget,
 		defaults = {
 			scale = scale,
 			pointFrom = pointFrom,
@@ -525,4 +586,3 @@ CONFIGMODE_CALLBACKS['Movable Frames'] = function(action)
 		lib.Lock()
 	end
 end
-
