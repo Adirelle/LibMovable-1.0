@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 9
+local MAJOR, MINOR = 'LibMovable-1.0', 10
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -559,7 +559,8 @@ local embeddedMethods = {
 	IterateMovableOverlays = "IterateOverlays",
 }
 
-function lib.Embed(target)
+function lib.Embed(target, ...)
+	if target == lib then return lib.Embed(...) end
 	embeds[target] = true
 	for k, v in pairs(embeddedMethods) do
 		target[k] = lib[v]
