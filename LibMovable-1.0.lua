@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 10
+local MAJOR, MINOR = 'LibMovable-1.0', 11
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -545,6 +545,12 @@ function lib.UpdateLayout(key)
 	end
 end
 
+function lib.ResetLayout(key)
+	for target, overlay in lib.IterateOverlays(key) do
+		overlay:ResetLayout()
+	end
+end
+
 -- Embedding
 
 lib.embeds = lib.embeds or {}
@@ -552,7 +558,8 @@ local embeds = lib.embeds
 
 local embeddedMethods = {
 	RegisterMovable = "RegisterMovable",
-	UpdateMovaleLayout = "UpdateLayout",
+	UpdateMovableLayout = "UpdateLayout",
+	ResetMovableLayout = "ResetLayout",
 	LockMovables = "Lock",
 	UnlockMovables = "Unlock",
 	AreMovablesLocked = "IsLocked",
