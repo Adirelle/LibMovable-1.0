@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 11
+local MAJOR, MINOR = 'LibMovable-1.0', 12
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -150,6 +150,7 @@ function proto.StartMoving(overlay, lock)
 	end
 	overlay:SetScript('OnUpdate', overlay.MovingUpdater)
 	overlay.isMoving = true
+	overlay:OnLeave()
 end
 
 function proto.StopMoving(overlay)
@@ -160,6 +161,9 @@ function proto.StopMoving(overlay)
 	overlay.target:StopMovingOrSizing()
 	overlay.target:SetMovable(false)
 	overlay.isMoving = nil
+	if overlay:IsMouseOver() then
+		overlay:OnEnter()
+	end
 	overlay:UpdateDatabase()
 end
 
@@ -318,6 +322,7 @@ end
 -- Overlay scripts
 
 function proto.OnEnter(overlay)
+	if overlay.isMoving then return end
 	GameTooltip_SetDefaultAnchor(GameTooltip, overlay)
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine(overlay.label)
