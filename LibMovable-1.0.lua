@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 12
+local MAJOR, MINOR = 'LibMovable-1.0', 13
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -96,6 +96,22 @@ local function SetFrameLayout(frame, scale, pointFrom, refFrame, pointTo, xOffse
 	end
 end
 
+-- Poor man's safecall
+
+local function safecall_return(success, ...)
+	if success then
+		return ...
+	else
+		geterrorhandler()((...))
+	end
+end
+
+local function safecall(func, ...)
+	if type(func) == "function" then
+		return safecall_return(pcall(func, ...))
+	end
+end
+
 -- Metatable stuff
 
 lib.frameMeta = lib.frameMeta or { __index = CreateFrame("Frame") }
@@ -120,13 +136,18 @@ function proto.UpgradeOverlay(overlay)
 	overlay.version = MINOR
 end
 
+function proto.GetDatabase(overlay)
+	return overlay.db
+end
+
 function proto.UpdateDatabase(overlay)
-	local db, target = overlay.db, overlay.target
+	local db, target = overlay:GetDatabase(), overlay.target
 	db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset = GetFrameLayout(target)
+	safecall(target.LM10_OnDatabaseUpdated, target)
 end
 
 function proto.ApplyLayout(overlay)
-	local db, target = overlay.db, overlay.target
+	local db, target = overlay:GetDatabase(), overlay.target
 	overlay.dirty = not SetFrameLayout(target, db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset)
 end
 
@@ -141,8 +162,9 @@ end
 
 function proto.StartMoving(overlay, lock)
 	if overlay.isMoving or overlay:InCombatLockdown() then return end
-	overlay.target:SetMovable(true)
-	overlay.target:StartMoving()
+	local target = overlay.target
+	target:SetMovable(true)
+	target:StartMoving()
 	if lock == "X" then
 		overlay.lockedX = select(4, overlay.target:GetPoint())
 	elseif lock == "Y" then
@@ -151,16 +173,19 @@ function proto.StartMoving(overlay, lock)
 	overlay:SetScript('OnUpdate', overlay.MovingUpdater)
 	overlay.isMoving = true
 	overlay:OnLeave()
+	safecall(target.LM10_OnStartedMoving, target)
 end
 
 function proto.StopMoving(overlay)
 	if not overlay.isMoving or overlay:InCombatLockdown() then return end
+	local target = overlay.target
 	overlay.lockedX, overlay.lockedY = nil, nil
 	overlay.Text:SetText(overlay.label)
 	overlay:SetScript('OnUpdate', nil)
-	overlay.target:StopMovingOrSizing()
-	overlay.target:SetMovable(false)
+	target:StopMovingOrSizing()
+	target:SetMovable(false)
 	overlay.isMoving = nil
+	safecall(target.LM10_OnStoppedMoving, target)
 	if overlay:IsMouseOver() then
 		overlay:OnEnter()
 	end
@@ -234,12 +259,7 @@ end
 
 function proto.IsTargetEnabled(overlay)
 	if overlay.canDisableTarget then
-		local ok, returnValue = pcall(overlay.target.LM10_IsEnabled, overlay.target)
-		if ok then 
-			return returnValue
-		else
-			geterrorhandler()(returnValue)
-		end
+		return safecall(overlay.target.LM10_IsEnabled, overlay.target)
 	end
 	return true
 end
@@ -247,10 +267,7 @@ end
 function proto.ToggleTarget(overlay)
 	if overlay.canDisableTarget then
 		local func = overlay:IsTargetEnabled() and "LM10_Disable" or "LM10_Enable"
-		local ok, returnValue = pcall(overlay.target[func], overlay.target)
-		if not ok then
-			geterrorhandler()(returnValue)
-		end
+		safecall(overlay.target[func], overlay.target)
 		overlay:UpdateDisplay()
 	end
 end
@@ -404,15 +421,22 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 	local protected = target:IsProtected()
 	local scale, pointFrom, refFrame, pointTo, xOffset, yOffset = GetFrameLayout(target)
 	label = label or target:GetName()
+	local GetDatabase
 	if db then
+		local t = db
+		if type(db) == "function" then
+			GetDatabase = db
+			t = db()
+			db = nil
+		end
 		SetFrameLayout(
 			target,
-			db.scale or scale,
-			db.pointFrom or pointFrom,
-			db.refFrame or refFrame,
-			db.pointTo or pointTo,
-			db.xOffset or xOffset,
-			db.yOffset or yOffset
+			t.scale or scale,
+			t.pointFrom or pointFrom,
+			t.refFrame or refFrame,
+			t.pointTo or pointTo,
+			t.xOffset or xOffset,
+			t.yOffset or yOffset
 		)
 	else
 		db = {}
@@ -432,6 +456,7 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 		key = key,
 		protected = protected,
 		canDisableTarget = canDisableTarget,
+		GetDatabase = GetDatabase,
 		defaults = {
 			scale = scale,
 			pointFrom = pointFrom,
