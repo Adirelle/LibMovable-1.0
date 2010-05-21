@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 13
+local MAJOR, MINOR = 'LibMovable-1.0', 14
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -147,8 +147,16 @@ function proto.UpdateDatabase(overlay)
 end
 
 function proto.ApplyLayout(overlay)
-	local db, target = overlay:GetDatabase(), overlay.target
-	overlay.dirty = not SetFrameLayout(target, db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset)
+	local db, target, defaults = overlay:GetDatabase(), overlay.target, overlay.defaults
+	overlay.dirty = not SetFrameLayout(
+		target, 
+		db.scale or defaults.scale,
+		db.pointFrom or defaults.pointFrom, 
+		db.refFrame or defaults.refFrame,
+		db.pointTo or defaults.pointTo,
+		db.xOffset or defaults.xOffset,
+		db.yOffset or defaults.yOffset
+	)
 end
 
 function proto.MovingUpdater(overlay)
@@ -235,8 +243,9 @@ function proto.MoveToCenter(overlay, centerX, centerY)
 end
 
 function proto.ResetLayout(overlay)
+	local db = overlay:GetDatabase()
 	for k, v in pairs(overlay.defaults) do
-		overlay.db[k] = v
+		db[k] = v
 	end
 	overlay:ApplyLayout()
 end
@@ -328,7 +337,7 @@ function proto.PLAYER_REGEN_DISABLED(overlay)
 end
 
 function proto.PLAYER_LOGOUT(overlay)
-	local db, defaults = overlay.db, overlay.defaults
+	local db, defaults = overlay:GetDatabase(), overlay.defaults
 	for k, v in pairs(defaults) do
 		if db[k] == v then
 			db[k] = nil
@@ -425,8 +434,9 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 	if db then
 		local t = db
 		if type(db) == "function" then
-			GetDatabase = db
-			t = db()
+			local func = db
+			GetDatabase = function() return func(target) end
+			t = db(target)
 			db = nil
 		end
 		SetFrameLayout(
@@ -495,12 +505,6 @@ function lib.SpawnOverlay(data)
 	text:SetShadowOffset(1, -1)
 	overlay.Text = text
 
-	for k, v in pairs(overlay.defaults) do
-		if overlay.db[k] == nil then
-			overlay.db[k] = v
-		end
-	end
-	
 	-- Upgrade overlay at spawn time if the data has been created with previous versions
 	if overlay.version < MINOR then
 		overlay:UpgradeOverlay()
