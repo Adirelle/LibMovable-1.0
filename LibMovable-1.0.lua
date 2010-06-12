@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 14
+local MAJOR, MINOR = 'LibMovable-1.0', 15
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -247,7 +247,7 @@ function proto.ResetLayout(overlay)
 	for k, v in pairs(overlay.defaults) do
 		db[k] = v
 	end
-	overlay:ApplyLayout()
+	proto.ApplyLayout(overlay)
 end
 
 function proto.UpdateDisplay(overlay)
@@ -574,12 +574,22 @@ function lib.IsLocked(key)
 end
 
 function lib.UpdateLayout(key)
+	for target, data in pairs(overlaysToBe) do
+		if type(data) == "table" and (not key or data.key == key) then
+			proto.ApplyLayout(data)
+		end
+	end
 	for target, overlay in lib.IterateOverlays(key) do
 		overlay:ApplyLayout()
 	end
 end
 
 function lib.ResetLayout(key)
+	for target, data in pairs(overlaysToBe) do
+		if type(data) == "table" and (not key or data.key == key) then
+			proto.ResetLayout(data)
+		end
+	end
 	for target, overlay in lib.IterateOverlays(key) do
 		overlay:ResetLayout()
 	end
