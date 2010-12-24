@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 15
+local MAJOR, MINOR = 'LibMovable-1.0', 16
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -250,7 +250,7 @@ function proto.ResetLayout(overlay)
 	proto.ApplyLayout(overlay)
 end
 
-function proto.UpdateDisplay(overlay)
+function proto.UpdateDisplay(overlay, inCombat)
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
 	if inCombat and overlay.protected then
 		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
@@ -277,7 +277,7 @@ function proto.ToggleTarget(overlay)
 	if overlay.canDisableTarget then
 		local func = overlay:IsTargetEnabled() and "LM10_Disable" or "LM10_Enable"
 		safecall(overlay.target[func], overlay.target)
-		overlay:UpdateDisplay()
+		overlay:UpdateDisplay(InCombatLockdown())
 	end
 end
 
@@ -290,7 +290,7 @@ function proto.EnableOverlay(overlay, inCombat)
 		overlay:EnableMouse(true)
 		overlay:EnableMouseWheel(true)
 	end
-	overlay:UpdateDisplay()
+	overlay:UpdateDisplay(inCombat)
 end
 
 function proto.SetScripts(overlay)
