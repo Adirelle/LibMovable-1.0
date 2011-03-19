@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 18
+local MAJOR, MINOR = 'LibMovable-1.0', 19
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -492,6 +492,9 @@ function lib.SpawnOverlay(data)
 	overlay:SetFrameStrata("DIALOG")
 	overlay:SetBackdrop(overlayBackdrop)
 	overlay:SetBackdropBorderColor(0,0,0,0)
+	if type(overlay.anchor) == "function" then
+		overlay.anchor = overlay.anchor(target)
+	end
 	overlay:SetAllPoints(overlay.anchor)
 	overlay:RegisterEvent("PLAYER_LOGOUT")
 	overlay:SetScripts()
