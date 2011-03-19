@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 16
+local MAJOR, MINOR = 'LibMovable-1.0', 17
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -464,6 +464,7 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 		target = target,
 		db = db,
 		key = key,
+		movable = true,
 		protected = protected,
 		canDisableTarget = canDisableTarget,
 		GetDatabase = GetDatabase,
@@ -550,17 +551,14 @@ end
 
 function lib.Unlock(key)
 	for target, data in pairs(overlaysToBe) do
-		if type(data) == "function" then
-			data(key)
-			if overlays[target] then
-				overlays[target]:UpgradeOverlay()
-			end
-		elseif not key or data.key == key then
+		if (not key or data.key == key) and data.movable then
 			lib.SpawnOverlay(data)
 		end
 	end
 	for target, overlay in lib.IterateOverlays(key) do
-		overlay:Show()
+		if overlay.movable then
+			overlay:Show()
+		end
 	end
 end
 
@@ -595,6 +593,21 @@ function lib.ResetLayout(key)
 	end
 end
 
+function lib.SetMovable(target, flag)
+	local overlay = overlaysToBe[target] or overlays[target]
+	if overlay then
+		overlay.movable = not not flag
+		if overlay.IsShown and overlay:IsShown() then
+			overlay:Hide()
+		end
+	end
+end
+
+function lib.IsMovable(target)
+	local overlay = overlaysToBe[target] or overlays[target]
+	return overlay and overlay.movable
+end
+
 -- Embedding
 
 lib.embeds = lib.embeds or {}
@@ -608,6 +621,8 @@ local embeddedMethods = {
 	UnlockMovables = "Unlock",
 	AreMovablesLocked = "IsLocked",
 	IterateMovableOverlays = "IterateOverlays",
+	SetMovable = "SetMovable",
+	IsMovable = "IsMovable",
 }
 
 function lib.Embed(target, ...)
