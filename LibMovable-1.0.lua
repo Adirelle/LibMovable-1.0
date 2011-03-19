@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 19
+local MAJOR, MINOR = 'LibMovable-1.0', 20
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -467,7 +467,7 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 		movable = true,
 		protected = protected,
 		canDisableTarget = canDisableTarget,
-		GetDatabase = GetDatabase,
+		GetDatabase = GetDatabase or proto.GetDatabase,
 		defaults = {
 			scale = scale,
 			pointFrom = pointFrom,
@@ -596,12 +596,31 @@ function lib.ResetLayout(key)
 	end
 end
 
-function lib.SetMovable(key, target, flag)
+function lib.SetMovable(key, target, flag, update)
 	local overlay = overlaysToBe[target] or overlays[target]
 	if overlay then
-		overlay.movable = not not flag
-		if overlay.IsShown and overlay:IsShown() then
-			overlay:Hide()
+		flag = not not flag
+		if overlay.movable ~= flag then
+			overlay.movable = flag
+			if not flag and overlay.IsShown and overlay:IsShown() then
+				overlay:Hide()
+			end
+			if update then
+				if flag then
+					proto.ApplyLayout(overlay)
+				else
+					local defaults = overlay.defaults
+					SetFrameLayout(
+						target,
+						defaults.scale,
+						defaults.pointFrom, 
+						defaults.refFrame,
+						defaults.pointTo,
+						defaults.xOffset,
+						defaults.yOffset
+					)
+				end
+			end
 		end
 	end
 end
@@ -638,20 +657,19 @@ end
 
 function lib:OnEmbedEnable(key)
 	for target, data in pairs(overlaysToBe) do
-		lib.SetMovable(key, target, true)
+		lib.SetMovable(key, target, true, true)
 	end
 	for target, overlay in lib.IterateOverlays(key) do
-		lib.SetMovable(key, target, true)
+		lib.SetMovable(key, target, true, true)
 	end
-	lib.UpdateLayout(key)
 end
 
 function lib:OnEmbedDisable(key)
 	for target, data in pairs(overlaysToBe) do
-		lib.SetMovable(key, target, false)
+		lib.SetMovable(key, target, false, true)
 	end
 	for target, overlay in lib.IterateOverlays(key) do
-		lib.SetMovable(key, target, false)
+		lib.SetMovable(key, target, false, true)
 	end
 end
 
