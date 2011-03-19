@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 17
+local MAJOR, MINOR = 'LibMovable-1.0', 18
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -593,7 +593,7 @@ function lib.ResetLayout(key)
 	end
 end
 
-function lib.SetMovable(target, flag)
+function lib.SetMovable(key, target, flag)
 	local overlay = overlaysToBe[target] or overlays[target]
 	if overlay then
 		overlay.movable = not not flag
@@ -603,7 +603,7 @@ function lib.SetMovable(target, flag)
 	end
 end
 
-function lib.IsMovable(target)
+function lib.IsMovable(key, target)
 	local overlay = overlaysToBe[target] or overlays[target]
 	return overlay and overlay.movable
 end
@@ -630,6 +630,25 @@ function lib.Embed(target, ...)
 	embeds[target] = true
 	for k, v in pairs(embeddedMethods) do
 		target[k] = lib[v]
+	end
+end
+
+function lib:OnEmbedEnable(key)
+	for target, data in pairs(overlaysToBe) do
+		lib.SetMovable(key, target, true)
+	end
+	for target, overlay in lib.IterateOverlays(key) do
+		lib.SetMovable(key, target, true)
+	end
+	lib.UpdateLayout(key)
+end
+
+function lib:OnEmbedDisable(key)
+	for target, data in pairs(overlaysToBe) do
+		lib.SetMovable(key, target, false)
+	end
+	for target, overlay in lib.IterateOverlays(key) do
+		lib.SetMovable(key, target, false)
 	end
 end
 
