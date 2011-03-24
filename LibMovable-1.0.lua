@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 20
+local MAJOR, MINOR = 'LibMovable-1.0', 21
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -307,7 +307,7 @@ end
 local menuOverlay
 local menu = {
 	{ isTitle = true, notCheckable = true },
-	{ text = false, func = function() menuOverlay:ToggleTarget() end, checked = function() return menuOverlay:IsTargetEnabled() end },
+	{ text = false, func = function() menuOverlay:ToggleTarget() end, checked = function() return menuOverlay:IsTargetEnabled() end, isNotRadio = true },
 	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end, notCheckable = true },
 	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end, notCheckable = true },
 	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end, notCheckable = true },
