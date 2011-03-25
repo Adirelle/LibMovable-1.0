@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 22
+local MAJOR, MINOR = 'LibMovable-1.0', 23
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -144,7 +144,13 @@ function proto.UpdateDatabase(overlay)
 	local db, target = overlay:GetDatabase(), overlay.target
 	db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset = GetFrameLayout(target)
 	safecall(target.LM10_OnDatabaseUpdated, target)
-	overlay:UpdateDisplay()
+	if overlay.UpdateDisplay then
+		overlay:UpdateDisplay(InCombatLockdown())
+	end
+end
+
+function proto.PostApplyLayout(overlay)
+	return overlay:UpdateDisplay(InCombatLockdown())
 end
 
 function proto.ApplyLayout(overlay)
@@ -158,6 +164,9 @@ function proto.ApplyLayout(overlay)
 		db.xOffset or defaults.xOffset,
 		db.yOffset or defaults.yOffset
 	)
+	if overlay.PostApplyLayout then
+		overlay:SetScript('OnUpdate', overlay.PostApplyLayout)
+	end
 end
 
 function proto.MovingUpdater(overlay)
@@ -182,6 +191,7 @@ function proto.StartMoving(overlay, lock)
 	overlay:SetScript('OnUpdate', overlay.MovingUpdater)
 	overlay.isMoving = true
 	overlay:OnLeave()
+	overlay:UpdateDisplay()
 	safecall(target.LM10_OnStartedMoving, target)
 end
 
@@ -249,12 +259,27 @@ function proto.ResetLayout(overlay)
 		db[k] = v
 	end
 	proto.ApplyLayout(overlay)
-	overlay:UpdateDisplay()
+end
+
+local function GetPointCoord(frame, point)
+	local x, y = frame:GetCenter()
+	if strmatch(point, "LEFT") then
+		x = frame:GetLeft()
+	elseif strmatch(point, "RIGHT") then
+		x = frame:GetRight()
+	end
+	if strmatch(point, "TOP") then
+		y = frame:GetTop()
+	elseif strmatch(point, "BOTTOM") then
+		y = frame:GetBottom()
+	end
+	return x, y
 end
 
 function proto.UpdateDisplay(overlay, inCombat)
-	if not overlay:IsVisible() then return end
+	--if not overlay:IsVisible() then return end
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
+	local connector, showConnector = overlay.connector, false
 	if inCombat and overlay.protected then
 		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
 	elseif not overlay:IsTargetEnabled() then
@@ -262,9 +287,26 @@ function proto.UpdateDisplay(overlay, inCombat)
 	else
 		local target = overlay.target
 		local parent = target:GetParent()
-		local refFrame = select(2, target:GetPoint())
+		local from, refFrame, to = target:GetPoint()
 		if refFrame and refFrame ~= parent then
-			r, g, b = 0, 0.5, 0
+			r, g, b = 0, 0.5, 0			
+			if not connector then
+				connector = overlay:CreateTexture(nil, "OVERLAY")
+				connector:SetTexture(0, 0.5, 0)
+				overlay.connector = connector
+			end
+			local cx, cy = overlay:GetCenter()
+			local sx, sy = GetPointCoord(overlay, from)
+			local ex, ey = GetPointCoord(refFrame, to)
+			DrawRouteLine(connector, overlay, sx-cx, sy-cy, ex-cx, ey-cy, 2, "CENTER")
+			showConnector = true
+		end
+	end
+	if connector then
+		if showConnector then
+			connector:Show()
+		elseif connector:IsShown() then
+			connector:Hide()
 		end
 	end
 	overlay:SetAlpha(alpha)
