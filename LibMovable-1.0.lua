@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 21
+local MAJOR, MINOR = 'LibMovable-1.0', 22
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -144,6 +144,7 @@ function proto.UpdateDatabase(overlay)
 	local db, target = overlay:GetDatabase(), overlay.target
 	db.scale, db.pointFrom, db.refFrame, db.pointTo, db.xOffset, db.yOffset = GetFrameLayout(target)
 	safecall(target.LM10_OnDatabaseUpdated, target)
+	overlay:UpdateDisplay()
 end
 
 function proto.ApplyLayout(overlay)
@@ -248,14 +249,23 @@ function proto.ResetLayout(overlay)
 		db[k] = v
 	end
 	proto.ApplyLayout(overlay)
+	overlay:UpdateDisplay()
 end
 
 function proto.UpdateDisplay(overlay, inCombat)
+	if not overlay:IsVisible() then return end
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
 	if inCombat and overlay.protected then
 		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
 	elseif not overlay:IsTargetEnabled() then
 		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L_DISABLED
+	else
+		local target = overlay.target
+		local parent = target:GetParent()
+		local refFrame = select(2, target:GetPoint())
+		if refFrame and refFrame ~= parent then
+			r, g, b = 0, 0.5, 0
+		end
 	end
 	overlay:SetAlpha(alpha)
 	overlay:SetBackdropColor(r, g, b, 0.7)
@@ -422,6 +432,7 @@ local overlays = lib.overlays
 local overlaysToBe = lib.overlaysToBe
 
 local libPath = strmatch(debugstack(1, 1, 0), "([Ii]nterface\\.-\\)[Ll]ib[Mm]ovable%-1%.0%.lua")
+
 local overlayBackdrop = {
 	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
 	edgeFile = libPath..'border', edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }	
