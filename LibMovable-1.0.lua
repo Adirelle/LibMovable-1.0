@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 23
+local MAJOR, MINOR = 'LibMovable-1.0', 24
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -473,12 +473,18 @@ lib.overlaysToBe = lib.overlaysToBe or {}
 local overlays = lib.overlays
 local overlaysToBe = lib.overlaysToBe
 
-local libPath = strmatch(debugstack(1, 1, 0), "([Ii]nterface\\.-\\)[Ll]ib[Mm]ovable%-1%.0%.lua")
-
 local overlayBackdrop = {
 	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
-	edgeFile = libPath..'border', edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }	
+	edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }	
 }
+
+local stackTrace, containerAddon = debugstack(1, 1, 0), ...
+local libPath = strmatch(stackTrace, '('..gsub(containerAddon, "(%W)", "%%%1")..'.-\\)[Ll]ib[Mm]ovable%-1%.0%.lua')
+if libPath then
+	overlayBackdrop.edgeFile = 'Interface\\'..libPath..'border'
+else
+	error("Cannot get library path from stack trace: "..stackTrace)
+end
 
 function lib.RegisterMovable(key, target, db, label, anchor)
 	if overlaysToBe[target] or overlays[target] then return end
