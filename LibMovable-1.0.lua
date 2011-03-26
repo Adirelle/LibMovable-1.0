@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 24
+local MAJOR, MINOR = 'LibMovable-1.0', 25
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -481,7 +481,7 @@ local overlayBackdrop = {
 local stackTrace, containerAddon = debugstack(1, 1, 0), ...
 local libPath = strmatch(stackTrace, '('..gsub(containerAddon, "(%W)", "%%%1")..'.-\\)[Ll]ib[Mm]ovable%-1%.0%.lua')
 if libPath then
-	overlayBackdrop.edgeFile = 'Interface\\'..libPath..'border'
+	overlayBackdrop.edgeFile = 'Interface\\AddOns\\'..libPath..'border'
 else
 	error("Cannot get library path from stack trace: "..stackTrace)
 end
