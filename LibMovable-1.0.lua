@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 25
+local MAJOR, MINOR = 'LibMovable-1.0', 26
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -391,9 +391,11 @@ end
 
 function proto.PLAYER_LOGOUT(overlay)
 	local db, defaults = overlay:GetDatabase(), overlay.defaults
-	for k, v in pairs(defaults) do
-		if db[k] == v then
-			db[k] = nil
+	if db then
+		for k, v in pairs(defaults) do
+			if db[k] == v then
+				db[k] = nil
+			end
 		end
 	end
 end
