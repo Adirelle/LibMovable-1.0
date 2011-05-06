@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 26
+local MAJOR, MINOR = 'LibMovable-1.0', 27
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -503,15 +503,17 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 			t = db(target)
 			db = nil
 		end
-		SetFrameLayout(
-			target,
-			t.scale or scale,
-			t.pointFrom or pointFrom,
-			t.refFrame or refFrame,
-			t.pointTo or pointTo,
-			t.xOffset or xOffset,
-			t.yOffset or yOffset
-		)
+		if t then
+			SetFrameLayout(
+				target,
+				t.scale or scale,
+				t.pointFrom or pointFrom,
+				t.refFrame or refFrame,
+				t.pointTo or pointTo,
+				t.xOffset or xOffset,
+				t.yOffset or yOffset
+			)
+		end
 	else
 		db = {}
 	end
