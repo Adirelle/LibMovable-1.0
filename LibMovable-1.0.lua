@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 29
+local MAJOR, MINOR = 'LibMovable-1.0', 30
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -287,36 +287,37 @@ local function GetPointCoord(frame, point)
 	elseif strmatch(point, "BOTTOM") then
 		y = frame:GetBottom()
 	end
-	return x, y
+	return x * frame:GetEffectiveScale(), y * frame:GetEffectiveScale()
 end
 
 function proto.UpdateDisplay(overlay, inCombat)
 	--if not overlay:IsVisible() then return end
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
-	local connector, showConnector = overlay.connector, false
+	local connector = overlay.connector
 	if inCombat and overlay.protected then
 		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
 	elseif not overlay:IsTargetEnabled() then
 		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L_DISABLED
-	else
-		local target = overlay.target
-		local from, refFrame, to = target:GetPoint()
-		if refFrame and refFrame ~= target:GetParent() and refFrame ~= UIParent then
-			r, g, b = 0, 0.5, 0
-			if not connector then
-				connector = UIParent:CreateTexture(nil, "OVERLAY")
-				connector:SetTexture(connectorTexture)
-				overlay.connector = connector
-			end
-			local cx, cy = overlay:GetCenter()
-			local sx, sy = GetPointCoord(overlay, from)
-			local ex, ey = GetPointCoord(refFrame, to)
-			DrawRouteLine(connector, overlay, sx-cx, sy-cy, ex-cx, ey-cy, 32, "CENTER")
-			showConnector = true
-		end
 	end
-	if connector then
-		connector:SetShown(showConnector)
+	local target = overlay.target
+	local scale = overlay:GetEffectiveScale()
+	local from, refFrame, to = target:GetPoint()
+	if not connector then
+		connector = overlay:CreateTexture(nil, "OVERLAY")
+		overlay.connector = connector
+	end
+	if refFrame and refFrame ~= target:GetParent() and refFrame ~= UIParent then
+		r, g, b = r/2, g/2, b/2
+		connector:SetTexture(connectorTexture)
+		connector:SetVertexColor(r, g, b, 1)
+		local sx, sy = GetPointCoord(target, from)
+		local ex, ey = GetPointCoord(refFrame, to)
+		DrawRouteLine(connector, overlay, 0, 0, (ex-sx) / scale, (ey-sy) / scale, 32, from)
+	else
+		connector:SetTexture(r, g, b, 0.7)
+		connector:ClearAllPoints()
+		connector:SetSize(5 / scale, 5 / scale)
+		connector:SetPoint(to, overlay, from)
 	end
 	overlay:SetAlpha(alpha)
 	overlay:SetBackdropColor(r, g, b, 0.7)
