@@ -40,7 +40,7 @@ if GetLocale() == "frFR" then
 	L_TIP_MOUSEWHEEL = "Molette de la souris : changer l'échelle d'affichage."
 	L_TIP_RIGHT_CLICK = "Clic droit : ouvrir le menu."
 	L_TIP_SHIFT_RIGHT_CLICK ="Maj+clic droit: activer/désactiver."
-	L_DISABLED = " (désactivé)"	
+	L_DISABLED = " (désactivé)"
 	L_IN_COMBAT_LOCKDOWN = " (verrouilé en combat)"
 end
 
@@ -156,9 +156,9 @@ end
 function proto.ApplyLayout(overlay)
 	local db, target, defaults = overlay:GetDatabase(), overlay.target, overlay.defaults
 	overlay.dirty = not SetFrameLayout(
-		target, 
+		target,
 		db.scale or defaults.scale,
-		db.pointFrom or defaults.pointFrom, 
+		db.pointFrom or defaults.pointFrom,
 		db.refFrame or defaults.refFrame,
 		db.pointTo or defaults.pointTo,
 		db.xOffset or defaults.xOffset,
@@ -238,7 +238,7 @@ function proto.MoveToCenter(overlay, centerX, centerY)
 	elseif cy > screenHeight * 2 / 3 then
 		point, cy = "TOP", cy + target:GetHeight() / 2 - screenHeight
 	else
-		cy = cy - screenHeight / 2 
+		cy = cy - screenHeight / 2
 	end
 	if cx < screenWidth / 3 then
 		point, cx = point .. "LEFT", cx - target:GetWidth() / 2
@@ -289,7 +289,7 @@ function proto.UpdateDisplay(overlay, inCombat)
 		local parent = target:GetParent()
 		local from, refFrame, to = target:GetPoint()
 		if refFrame and refFrame ~= parent then
-			r, g, b = 0, 0.5, 0			
+			r, g, b = 0, 0.5, 0
 			if not connector then
 				connector = overlay:CreateTexture(nil, "OVERLAY")
 				connector:SetTexture(0, 0.5, 0)
@@ -477,7 +477,7 @@ local overlaysToBe = lib.overlaysToBe
 
 local overlayBackdrop = {
 	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
-	edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }	
+	edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
 
 local stackTrace, containerAddon = debugstack(1, 1, 0), ...
@@ -517,12 +517,12 @@ function lib.RegisterMovable(key, target, db, label, anchor)
 	else
 		db = {}
 	end
-	
-	local canDisableTarget = 
+
+	local canDisableTarget =
 			type(target.LM10_Enable) == "function"
 			and type(target.LM10_Disable) == "function"
 			and type(target.LM10_IsEnabled) == "function"
-	
+
 	overlaysToBe[target] = {
 		version = MINOR,
 		label = label,
@@ -548,10 +548,10 @@ end
 function lib.SpawnOverlay(data)
 	local target = data.target
 
-	local overlay = setmetatable(CreateFrame("Frame", nil, UIParent), lib.meta)	
+	local overlay = setmetatable(CreateFrame("Frame", nil, UIParent), lib.meta)
 	for k, v in pairs(data) do
 		overlay[k] = v
-	end	
+	end
 	overlaysToBe[target] = nil
 	overlays[target] = overlay
 
@@ -679,7 +679,7 @@ function lib.SetMovable(key, target, flag, update)
 					SetFrameLayout(
 						target,
 						defaults.scale,
-						defaults.pointFrom, 
+						defaults.pointFrom,
 						defaults.refFrame,
 						defaults.pointTo,
 						defaults.xOffset,
