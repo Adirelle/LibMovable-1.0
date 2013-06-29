@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 30
+local MAJOR, MINOR = 'LibMovable-1.0', 31
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -46,13 +46,12 @@ end
 
 -- Assets
 
-local connectorTexture, overlayBorderBackdop
+local connectorTexture, overlayBackdropBorder
 do
 	local libPath = strmatch(debugstack(1, 1, 0), [[^(.-\)[Ll]ib[Mm]ovable%-1%.0%.lua]])
 	if libPath then
-		overlayBorderBackdop = libPath..'border'
+		overlayBackdropBorder = libPath..'border'
 		connectorTexture = libPath..'Connector-Texture'
-		print(overlayBorderBackdop, connectorTexture)
 	else
 		error("Cannot get library path from stack trace: "..stackTrace)
 	end
@@ -487,7 +486,7 @@ local overlaysToBe = lib.overlaysToBe
 
 local overlayBackdrop = {
 	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
-	egdeFile = overlayBorderBackdop, edgeSize = 1,
+	edgeFile = overlayBackdropBorder, edgeSize = 1,
 	insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
 
