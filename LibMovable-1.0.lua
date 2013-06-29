@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 27
+local MAJOR, MINOR = 'LibMovable-1.0', 28
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -276,6 +276,9 @@ local function GetPointCoord(frame, point)
 	return x, y
 end
 
+-- Guess the connector texture path from the current file path
+local connectorTexture = string.match(debugstack(1,1,0), [[^(.+\)LibMovable%-1%.0%.lua]]) .. 'Connector-Texture'
+
 function proto.UpdateDisplay(overlay, inCombat)
 	--if not overlay:IsVisible() then return end
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
@@ -292,22 +295,18 @@ function proto.UpdateDisplay(overlay, inCombat)
 			r, g, b = 0, 0.5, 0
 			if not connector then
 				connector = overlay:CreateTexture(nil, "OVERLAY")
-				connector:SetTexture(0, 0.5, 0)
+				connector:SetTexture(connectorTexture)
 				overlay.connector = connector
 			end
 			local cx, cy = overlay:GetCenter()
 			local sx, sy = GetPointCoord(overlay, from)
 			local ex, ey = GetPointCoord(refFrame, to)
-			DrawRouteLine(connector, overlay, sx-cx, sy-cy, ex-cx, ey-cy, 2, "CENTER")
+			DrawRouteLine(connector, overlay, sx-cx, sy-cy, ex-cx, ey-cy, 32, "CENTER")
 			showConnector = true
 		end
 	end
 	if connector then
-		if showConnector then
-			connector:Show()
-		elseif connector:IsShown() then
-			connector:Hide()
-		end
+		connector:SetShown(showConnector)
 	end
 	overlay:SetAlpha(alpha)
 	overlay:SetBackdropColor(r, g, b, 0.7)
