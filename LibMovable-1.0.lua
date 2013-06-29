@@ -44,6 +44,20 @@ if GetLocale() == "frFR" then
 	L_IN_COMBAT_LOCKDOWN = " (verrouilé en combat)"
 end
 
+-- Assets
+
+local connectorTexture, overlayBorderBackdop
+do
+	local libPath = strmatch(debugstack(1, 1, 0), [[^(.-\)[Ll]ib[Mm]ovable%-1%.0%.lua]])
+	if libPath then
+		overlayBorderBackdop = libPath..'border'
+		connectorTexture = libPath..'Connector-Texture'
+		print(overlayBorderBackdop, connectorTexture)
+	else
+		error("Cannot get library path from stack trace: "..stackTrace)
+	end
+end
+
 -- Frame layout helpers
 
 local function GetFrameLayout(frame)
@@ -276,9 +290,6 @@ local function GetPointCoord(frame, point)
 	return x, y
 end
 
--- Guess the connector texture path from the current file path
-local connectorTexture = string.match(debugstack(1,1,0), [[^(.+\)LibMovable%-1%.0%.lua]]) .. 'Connector-Texture'
-
 function proto.UpdateDisplay(overlay, inCombat)
 	--if not overlay:IsVisible() then return end
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
@@ -475,16 +486,9 @@ local overlaysToBe = lib.overlaysToBe
 
 local overlayBackdrop = {
 	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
-	edgeSize = 1, insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	egdeFile = overlayBorderBackdop, edgeSize = 1,
+	insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
-
-local stackTrace, containerAddon = debugstack(1, 1, 0), ...
-local libPath = strmatch(stackTrace, '('..gsub(containerAddon, "(%W)", "%%%1")..'.-\\)[Ll]ib[Mm]ovable%-1%.0%.lua')
-if libPath then
-	overlayBackdrop.edgeFile = 'Interface\\AddOns\\'..libPath..'border'
-else
-	error("Cannot get library path from stack trace: "..stackTrace)
-end
 
 function lib.RegisterMovable(key, target, db, label, anchor)
 	if overlaysToBe[target] or overlays[target] then return end
