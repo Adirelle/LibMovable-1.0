@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 28
+local MAJOR, MINOR = 'LibMovable-1.0', 29
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -293,7 +293,7 @@ function proto.UpdateDisplay(overlay, inCombat)
 		if refFrame and refFrame ~= target:GetParent() and refFrame ~= UIParent then
 			r, g, b = 0, 0.5, 0
 			if not connector then
-				connector = overlay:CreateTexture(nil, "OVERLAY")
+				connector = UIParent:CreateTexture(nil, "OVERLAY")
 				connector:SetTexture(connectorTexture)
 				overlay.connector = connector
 			end
