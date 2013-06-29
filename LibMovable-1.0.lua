@@ -289,9 +289,8 @@ function proto.UpdateDisplay(overlay, inCombat)
 		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L_DISABLED
 	else
 		local target = overlay.target
-		local parent = target:GetParent()
 		local from, refFrame, to = target:GetPoint()
-		if refFrame and refFrame ~= parent then
+		if refFrame and refFrame ~= target:GetParent() and refFrame ~= UIParent then
 			r, g, b = 0, 0.5, 0
 			if not connector then
 				connector = overlay:CreateTexture(nil, "OVERLAY")
