@@ -4,7 +4,7 @@ LibMovable-1.0 - Movable frame library
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 31
+local MAJOR, MINOR = 'LibMovable-1.0', 32
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -723,22 +723,25 @@ function lib.Embed(target, ...)
 	end
 end
 
-function lib:OnEmbedEnable(key)
+function lib:SetEnabled(key, enabled)
 	for target, data in pairs(overlaysToBe) do
-		lib.SetMovable(key, target, true, true)
+		if not key or data.key == key then
+			lib.SetMovable(key, target, enabled, true)
+		end
 	end
 	for target, overlay in lib.IterateOverlays(key) do
-		lib.SetMovable(key, target, true, true)
+		if not key or overlay.key == key then
+			lib.SetMovable(key, target, enabled, true)
+		end
 	end
 end
 
+function lib:OnEmbedEnable(key)
+	lib:SetEnabled(key, true)
+end
+
 function lib:OnEmbedDisable(key)
-	for target, data in pairs(overlaysToBe) do
-		lib.SetMovable(key, target, false, true)
-	end
-	for target, overlay in lib.IterateOverlays(key) do
-		lib.SetMovable(key, target, false, true)
-	end
+	lib:SetEnabled(key, false)
 end
 
 -- Upgrading embeds and overlays from previous versions
