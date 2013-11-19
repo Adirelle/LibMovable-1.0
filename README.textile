@@ -1,0 +1,32 @@
+h1. LibMovable-1.0
+
+This library allows addon developers to quickly and easily setup user-positionable frames.
+
+h2. End-user features
+
+LibMovable-1.0 works using a lock/unlock mechanism. When unlocked, the position of the frames are shown with colored overlays, even if the frames are hidden. The user can then move the frames around by dragging the overlays and rescale them using the mousewheel ; x- or y-axis locking is available through modifier keys. There is no need to enable mouse interaction with the frames.
+
+Here is the meaning of the overlay colors:
+* green overlays denote unlocked frames, that can be moved freely,
+* red overlays denote secure frames that are locked because of the combat restriction,
+* grey overlays denote disabled frames (if the addon provides such mechanism, see below).
+
+If a "movable" frame is anchored to another one using :SetPoint, LibMovable-1.0 displays the link. The user can separate either move the first frame, keeping all the frames together, or move the second one to break the link and place the frame wherever he wants. Resetting the frame position restores the anchor.
+
+Overlays are labelled and show a tooltip with some usage guidelines. They also provides a dropdown menu with a few options.
+
+LibMovable-1.0 supports "one-click config mode":http://forums.wowace.com/showthread.php?t=14765.
+
+h2. Developer features
+
+LibMovable-1.0 works by registering each target frame. The frame should be anchored in its default position prior to registering. Overlays automatically fills the whole frame space. In case of variable size, one can pass another frame to fill.
+
+LibMovable-1.0 saves and restores frame positions and scales from any table passed to the register function ; one can also pass a callback that returns such table (handy to handle AceDB profiles).
+
+It can be embedded in any AceAddon addons (including modules) and automatically disable all addon overlays when the addon is disabled. Frames can be (un)locked individually or all at once.
+
+When adding the proper methods to the target frame, LibMovable-1.0 add some options to enable and disable it.
+
+h2. License
+
+LibMovable-1.0 is licensed using the GPL v3.
