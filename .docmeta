@@ -1,0 +1,9 @@
+-
+  type: textile
+  input-file: README.textile
+  output-page: Main
+
+-
+  type: luadoc
+  input-file: LibMovable-1.0.lua
+  output-page: "API"
