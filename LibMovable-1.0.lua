@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with LibMovable-1.0.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 34
+local MAJOR, MINOR = 'LibMovable-1.0', 35
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 
@@ -58,6 +58,24 @@ if locale == "frFR" then
 	L['Shift+right-click: enable/disable.'] ="Maj+clic droit: activer/désactiver."
 	L[' (disabled)'] = " (désactivé)"
 	L[' (locked down in combat)'] = " (verrouilé en combat)"
+elseif locale == "ptBR" then
+	--@localization(locale="ptBR", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "deDE" then
+	--@localization(locale="deDE", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "itIT" then
+	--@localization(locale="itIT", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "koKR" then
+	--@localization(locale="koKR", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "esMX" then
+	--@localization(locale="esMX", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "ruRU" then
+	--@localization(locale="ruRU", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "zhCN" then
+	--@localization(locale="zhCN", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "esES" then
+	--@localization(locale="esES", format="lua_additive_table", handle-unlocalized="ignore")@
+elseif locale == "zhTW" then
+	--@localization(locale="zhTW", format="lua_additive_table", handle-unlocalized="ignore")@
 end
 
 -- Assets
