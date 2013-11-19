@@ -504,6 +504,12 @@ local overlayBackdrop = {
 	insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
 
+--- Register a frame.
+-- @name :RegisterMovable(target, db, label, anchor)
+-- @param target (frame) The frame that should become movable.
+-- @param db (table/function) The table to save position into, or a callback that returns such table.
+-- @param label (string) The overlay label.
+-- @param anchor (frame) Optional frame to use in place of target for overlay anchor.
 function lib.RegisterMovable(key, target, db, label, anchor)
 	if overlaysToBe[target] or overlays[target] then return end
 
@@ -618,6 +624,9 @@ setmetatable(lib.__iterators, {
 	end,
 })
 
+--- Return an iterator on frame overlays.
+-- @name :IterateMovableOverlays()
+-- @param A (iter, data, index) triplet suitable for for .. in .. do loops.
 function lib.IterateMovableOverlays(key)
 	if key then
 		return lib.__iterators[key], overlays
@@ -628,12 +637,16 @@ end
 
 -- (Un)locking related methods
 
+--- Lock all frames.
+-- @name :LockMovables()
 function lib.LockMovables(key)
 	for target, overlay in lib.IterateMovableOverlays(key) do
 		overlay:Hide()
 	end
 end
 
+--- Unlock all frames.
+-- @name :UnlockMovables()
 function lib.UnlockMovables(key)
 	for target, data in pairs(overlaysToBe) do
 		if (not key or data.key == key) and data.movable then
@@ -647,6 +660,9 @@ function lib.UnlockMovables(key)
 	end
 end
 
+--- Check whether all frames are locked or not.
+-- @name :AreMovablesLocked()
+-- @return (boolean) True if all frame are locked, false if at least one frame is unlocked.
 function lib.AreMovablesLocked(key)
 	for target, overlay in lib.IterateMovableOverlays(key) do
 		if overlay:IsShown() then
@@ -656,6 +672,10 @@ function lib.AreMovablesLocked(key)
 	return true
 end
 
+--- Refresh the layout of all frames.
+-- Force every frames to re-read and to apply theirs settings.
+-- Useful after a profile switch or reset.
+-- @name :UpdateMovableLayout()
 function lib.UpdateMovableLayout(key)
 	for target, data in pairs(overlaysToBe) do
 		if type(data) == "table" and (not key or data.key == key) then
@@ -667,6 +687,8 @@ function lib.UpdateMovableLayout(key)
 	end
 end
 
+--- Reset all frames to their default position and scale.
+-- @name :ResetMovableLayout()
 function lib.ResetMovableLayout(key)
 	for target, data in pairs(overlaysToBe) do
 		if type(data) == "table" and (not key or data.key == key) then
@@ -678,6 +700,12 @@ function lib.ResetMovableLayout(key)
 	end
 end
 
+--- Enable/disable the movable behavior of a frame.
+-- This is used to disable all the overlays frames of a disabled addon.
+-- @name :SetMovable(target)
+-- @param target (frame) The target frame.
+-- @param flag (boolean) True to enable the frame.
+-- @param update (boolean) True to apply the settings (if enabled), or reset the frame to its default position (if disable).
 function lib.SetMovable(key, target, flag, update)
 	local overlay = overlaysToBe[target] or overlays[target]
 	if overlay then
@@ -707,6 +735,10 @@ function lib.SetMovable(key, target, flag, update)
 	end
 end
 
+--- Check whether a given frame can be unlocked.
+-- @name :IsMovable(target)
+-- @param target (frame) The frame to check.
+-- @return (boolean) True if the frame can be unlocked.
 function lib.IsMovable(key, target)
 	local overlay = overlaysToBe[target] or overlays[target]
 	return overlay and overlay.movable
