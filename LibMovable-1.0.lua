@@ -18,44 +18,46 @@ You should have received a copy of the GNU General Public License
 along with LibMovable-1.0.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 33
-local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
+local MAJOR, MINOR = 'LibMovable-1.0', 34
+local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
-oldMinor = oldMinor or 0
 
 -- Localization
-L_MENU_ENABLED = "Enabled"
-L_MENU_CENTER_X = "Center horizontally"
-L_MENU_CENTER_Y = "Center vertically"
-L_MENU_RESET = "Reset to default position"
-L_MENU_HIDE_THIS = "Hide this moving handle"
-L_MENU_HIDE_ALL = "Hide all moving handles"
-L_TIP_CONTROLS = "Controls:"
-L_TIP_DRAG ="Drag: move."
-L_TIP_SHIFT_DRAG = "Shift+drag: move vertically."
-L_TIP_CTRL_DRAG = "Control+drag: move horizontally."
-L_TIP_MOUSEWHEEL = "Mousewheel: change scale."
-L_TIP_RIGHT_CLICK = "Right-click: open menu."
-L_TIP_SHIFT_RIGHT_CLICK ="Shift+right-click: enable/disable."
-L_DISABLED = " (disabled)"
-L_IN_COMBAT_LOCKDOWN = " (locked down in combat)"
+local L = {
+	['Enabled'] = "Enabled",
+	['Center horizontally'] = "Center horizontally",
+	['Center vertically'] = "Center vertically",
+	['Reset to default position'] = "Reset to default position",
+	['Hide this moving handle'] = "Hide this moving handle",
+	['Hide all moving handles'] = "Hide all moving handles",
+	['Controls:'] = "Controls:",
+	['Drag: move.'] ="Drag: move.",
+	['Shift+drag: move vertically.'] = "Shift+drag: move vertically.",
+	['Control+drag: move horizontally.'] = "Control+drag: move horizontally.",
+	['Mousewheel: change scale.'] = "Mousewheel: change scale.",
+	['Right-click: open menu.'] = "Right-click: open menu.",
+	['Shift+right-click: enable/disable.'] ="Shift+right-click: enable/disable.",
+	[' (disabled)'] = " (disabled)",
+	[' (locked down in combat)'] = " (locked down in combat)",
+}
 
-if GetLocale() == "frFR" then
-	L_MENU_ENABLED = "Activé"
-	L_MENU_CENTER_X = "Centrer horizontalement"
-	L_MENU_CENTER_Y = "Centrer verticalement"
-	L_MENU_RESET = "Réinitialiser la position"
-	L_MENU_HIDE_THIS = "Cacher"
-	L_MENU_HIDE_ALL = "Tout cacher"
-	L_TIP_CONTROLS = "Contrôles :"
-	L_TIP_DRAG ="Tirer : déplacer."
-	L_TIP_SHIFT_DRAG = "Tirer en pressant Maj : déplacer verticalement."
-	L_TIP_CTRL_DRAG = "Tirer en pressant Ctrl : déplacer horizontalement."
-	L_TIP_MOUSEWHEEL = "Molette de la souris : changer l'échelle d'affichage."
-	L_TIP_RIGHT_CLICK = "Clic droit : ouvrir le menu."
-	L_TIP_SHIFT_RIGHT_CLICK ="Maj+clic droit: activer/désactiver."
-	L_DISABLED = " (désactivé)"
-	L_IN_COMBAT_LOCKDOWN = " (verrouilé en combat)"
+local locale = GetLocale()
+if locale == "frFR" then
+	L['Enabled'] = "Activé"
+	L['Center horizontally'] = "Centrer horizontalement"
+	L['Center vertically'] = "Centrer verticalement"
+	L['Reset to default position'] = "Réinitialiser la position"
+	L['Hide this moving handle'] = "Cacher"
+	L['Hide all moving handles'] = "Tout cacher"
+	L['Controls:'] = "Contrôles :"
+	L['Drag: move.'] ="Tirer : déplacer."
+	L['Shift+drag: move vertically.'] = "Tirer en pressant Maj : déplacer verticalement."
+	L['Control+drag: move horizontally.'] = "Tirer en pressant Ctrl : déplacer horizontalement."
+	L['Mousewheel: change scale.'] = "Molette de la souris : changer l'échelle d'affichage."
+	L['Right-click: open menu.'] = "Clic droit : ouvrir le menu."
+	L['Shift+right-click: enable/disable.'] ="Maj+clic droit: activer/désactiver."
+	L[' (disabled)'] = " (désactivé)"
+	L[' (locked down in combat)'] = " (verrouilé en combat)"
 end
 
 -- Assets
@@ -308,9 +310,9 @@ function proto.UpdateDisplay(overlay, inCombat)
 	local r, g, b, labelSuffix, alpha = 0, 1, 0, "", 1
 	local connector = overlay.connector
 	if inCombat and overlay.protected then
-		r, g, b, labelSuffix, alpha = 1, 0, 0, L_IN_COMBAT_LOCKDOWN, 0.4
+		r, g, b, labelSuffix, alpha = 1, 0, 0, L[' (locked down in combat)'], 0.4
 	elseif not overlay:IsTargetEnabled() then
-		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L_DISABLED
+		r, g, b, labelSuffix = 0.5, 0.5, 0.5, L[' (disabled)']
 	end
 	local target = overlay.target
 	local scale = overlay:GetEffectiveScale()
@@ -383,11 +385,11 @@ local menuOverlay
 local menu = {
 	{ isTitle = true, notCheckable = true },
 	{ text = false, func = function() menuOverlay:ToggleTarget() end, checked = function() return menuOverlay:IsTargetEnabled() end, isNotRadio = true },
-	{ text = L_MENU_CENTER_X, func = function() menuOverlay:MoveToCenter(true, false) end, notCheckable = true },
-	{ text = L_MENU_CENTER_Y, func = function() menuOverlay:MoveToCenter(false, true) end, notCheckable = true },
-	{	text = L_MENU_RESET, func = function() menuOverlay:ResetLayout() end, notCheckable = true },
-	{ text = L_MENU_HIDE_THIS, func = function() menuOverlay:Hide() end, notCheckable = true },
-	{ text = L_MENU_HIDE_ALL, func = function() lib.Lock() end, notCheckable = true },
+	{ text = L['Center horizontally'], func = function() menuOverlay:MoveToCenter(true, false) end, notCheckable = true },
+	{ text = L['Center vertically'], func = function() menuOverlay:MoveToCenter(false, true) end, notCheckable = true },
+	{	text = L['Reset to default position'], func = function() menuOverlay:ResetLayout() end, notCheckable = true },
+	{ text = L['Hide this moving handle'], func = function() menuOverlay:Hide() end, notCheckable = true },
+	{ text = L['Hide all moving handles'], func = function() lib.Lock() end, notCheckable = true },
 	{ text = CANCEL, notCheckable = true }
 }
 
@@ -395,7 +397,7 @@ function proto.OpenMenu(overlay)
 	lib.menuFrame = lib.menuFrame or CreateFrame("Frame", "LibMovable10MenuDropDown", UIParent, "UIDropDownMenuTemplate")
 	menuOverlay = overlay
 	menu[1].text = menuOverlay.label
-	menu[2].text = menuOverlay:CanDisableTarget() and L_MENU_ENABLED or false
+	menu[2].text = menuOverlay:CanDisableTarget() and L['Enabled'] or false
 	EasyMenu(menu, lib.menuFrame, "cursor", 0, 0, "MENU")
 end
 
@@ -430,14 +432,14 @@ function proto.OnEnter(overlay)
 	GameTooltip_SetDefaultAnchor(GameTooltip, overlay)
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine(overlay.label)
-	GameTooltip:AddLine(L_TIP_CONTROLS, 1, 1, 1)
-	GameTooltip:AddLine(L_TIP_DRAG, 1, 1, 1)
-	GameTooltip:AddLine(L_TIP_SHIFT_DRAG, 1, 1, 1)
-	GameTooltip:AddLine(L_TIP_CTRL_DRAG, 1, 1, 1)
-	GameTooltip:AddLine(L_TIP_MOUSEWHEEL, 1, 1, 1)
-	GameTooltip:AddLine(L_TIP_RIGHT_CLICK, 1, 1, 1)
+	GameTooltip:AddLine(L['Controls:'], 1, 1, 1)
+	GameTooltip:AddLine(L['Drag: move.'], 1, 1, 1)
+	GameTooltip:AddLine(L['Shift+drag: move vertically.'], 1, 1, 1)
+	GameTooltip:AddLine(L['Control+drag: move horizontally.'], 1, 1, 1)
+	GameTooltip:AddLine(L['Mousewheel: change scale.'], 1, 1, 1)
+	GameTooltip:AddLine(L['Right-click: open menu.'], 1, 1, 1)
 	if overlay:CanDisableTarget() then
-		GameTooltip:AddLine(L_TIP_SHIFT_RIGHT_CLICK, 1, 1, 1)
+		GameTooltip:AddLine(L['Shift+right-click: enable/disable.'], 1, 1, 1)
 	end
 	GameTooltip:Show()
 end
