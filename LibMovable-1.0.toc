@@ -4,6 +4,7 @@
 ## Notes: Movable frame library.
 ## Author: Adirelle
 ## Version: 1.0
+## X-License: GPL v3
 
 ## OptionalDeps: LibStub
 
