@@ -1,13 +1,16 @@
-## Interface: 30300
+## Interface: 50400
 
 ## Title: Lib: Movable-1.0
 ## Notes: Movable frame library.
 ## Author: Adirelle
-## Version: 1.0
+## Version: @project-version@
+## LoadOnDemand: 1
+## X-Date: @project-date-iso@
+## X-Category: Library
 ## X-License: GPL v3
+## X-eMail: adirelle@gmail.com
 
 ## OptionalDeps: LibStub
 
 LibStub.lua
 LibMovable-1.0.lua
-
