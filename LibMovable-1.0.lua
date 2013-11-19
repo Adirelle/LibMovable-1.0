@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with LibMovable-1.0.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 32
+local MAJOR, MINOR = 'LibMovable-1.0', 33
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -618,7 +618,7 @@ setmetatable(lib.__iterators, {
 	end,
 })
 
-function lib.IterateOverlays(key)
+function lib.IterateMovableOverlays(key)
 	if key then
 		return lib.__iterators[key], overlays
 	else
@@ -628,27 +628,27 @@ end
 
 -- (Un)locking related methods
 
-function lib.Lock(key)
-	for target, overlay in lib.IterateOverlays(key) do
+function lib.LockMovables(key)
+	for target, overlay in lib.IterateMovableOverlays(key) do
 		overlay:Hide()
 	end
 end
 
-function lib.Unlock(key)
+function lib.UnlockMovables(key)
 	for target, data in pairs(overlaysToBe) do
 		if (not key or data.key == key) and data.movable then
 			lib.SpawnOverlay(data)
 		end
 	end
-	for target, overlay in lib.IterateOverlays(key) do
+	for target, overlay in lib.IterateMovableOverlays(key) do
 		if overlay.movable then
 			overlay:Show()
 		end
 	end
 end
 
-function lib.IsLocked(key)
-	for target, overlay in lib.IterateOverlays(key) do
+function lib.AreMovablesLocked(key)
+	for target, overlay in lib.IterateMovableOverlays(key) do
 		if overlay:IsShown() then
 			return false
 		end
@@ -656,25 +656,25 @@ function lib.IsLocked(key)
 	return true
 end
 
-function lib.UpdateLayout(key)
+function lib.UpdateMovableLayout(key)
 	for target, data in pairs(overlaysToBe) do
 		if type(data) == "table" and (not key or data.key == key) then
 			proto.ApplyLayout(data)
 		end
 	end
-	for target, overlay in lib.IterateOverlays(key) do
+	for target, overlay in lib.IterateMovableOverlays(key) do
 		overlay:ApplyLayout()
 	end
 end
 
-function lib.ResetLayout(key)
+function lib.ResetMovableLayout(key)
 	for target, data in pairs(overlaysToBe) do
 		if type(data) == "table" and (not key or data.key == key) then
 			proto.ResetLayout(data)
 		end
 	end
-	for target, overlay in lib.IterateOverlays(key) do
 		overlay:ResetLayout()
+	for target, overlay in lib.IterateMovableOverlays(key) do
 	end
 end
 
@@ -712,28 +712,36 @@ function lib.IsMovable(key, target)
 	return overlay and overlay.movable
 end
 
+-- Backward compatibility
+lib.Lock = lib.LockMovables
+lib.Unlock = lib.UnlockMovables
+lib.IsLocked = lib.AreMovablesLocked
+lib.IterateOverlays = lib.IterateMovableOverlays
+lib.UpdateLayout = lib.UpdateMovableLayout
+lib.ResetLayout = lib.ResetMovableLayout
+
 -- Embedding
 
 lib.embeds = lib.embeds or {}
 local embeds = lib.embeds
 
 local embeddedMethods = {
-	RegisterMovable = "RegisterMovable",
-	UpdateMovableLayout = "UpdateLayout",
-	ResetMovableLayout = "ResetLayout",
-	LockMovables = "Lock",
-	UnlockMovables = "Unlock",
-	AreMovablesLocked = "IsLocked",
-	IterateMovableOverlays = "IterateOverlays",
-	SetMovable = "SetMovable",
-	IsMovable = "IsMovable",
+	"RegisterMovable",
+	"UpdateMovableLayout",
+	"ResetMovableLayout",
+	"LockMovables",
+	"UnlockMovables",
+	"AreMovablesLocked",
+	"IterateMovableOverlays",
+	"SetMovable",
+	"IsMovable",
 }
 
 function lib.Embed(target, ...)
 	if target == lib then return lib.Embed(...) end
 	embeds[target] = true
-	for k, v in pairs(embeddedMethods) do
-		target[k] = lib[v]
+	for _, name in pairs(embeddedMethods) do
+		target[name] = lib[name]
 	end
 end
 
@@ -743,7 +751,7 @@ function lib:SetEnabled(key, enabled)
 			lib.SetMovable(key, target, enabled, true)
 		end
 	end
-	for target, overlay in lib.IterateOverlays(key) do
+	for target, overlay in lib.IterateMovableOverlays(key) do
 		if not key or overlay.key == key then
 			lib.SetMovable(key, target, enabled, true)
 		end
@@ -773,8 +781,8 @@ end
 CONFIGMODE_CALLBACKS = CONFIGMODE_CALLBACKS or {}
 CONFIGMODE_CALLBACKS['Movable Frames'] = function(action)
 	if action == "ON" then
-		lib.Unlock()
+		lib.UnlockMovables()
 	elseif action == "OFF" then
-		lib.Lock()
+		lib.LockMovables()
 	end
 end
