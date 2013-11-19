@@ -23,9 +23,9 @@ LibMovable-1.0 works by registering each target frame. The frame should be ancho
 
 LibMovable-1.0 saves and restores frame positions and scales from any table passed to the register function ; one can also pass a callback that returns such table (handy to handle AceDB profiles).
 
-It can be embedded in any AceAddon addons (including modules) and automatically disable all addon overlays when the addon is disabled. Frames can be (un)locked individually or all at once.
+LibMovable-1.0 can be embedded in any AceAddon addons (including modules) and automatically disable all addon overlays when the addon is disabled. Frames can be (un)locked individually or all at once.
 
-When adding the proper methods to the target frame, LibMovable-1.0 add some options to enable and disable it.
+When adding the proper methods to the target frame, LibMovable-1.0 adds some options to enable and disable it.
 
 h2. License
 
