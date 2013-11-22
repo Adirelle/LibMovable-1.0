@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with LibMovable-1.0.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 35
+local MAJOR, MINOR = 'LibMovable-1.0', 36
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 
@@ -715,8 +715,8 @@ function lib.ResetMovableLayout(key)
 			proto.ResetLayout(data)
 		end
 	end
-		overlay:ResetLayout()
 	for target, overlay in lib.IterateMovableOverlays(key) do
+		overlay:ResetLayout()
 	end
 end
 
