@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with LibMovable-1.0.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local MAJOR, MINOR = 'LibMovable-1.0', 36
+local MAJOR, MINOR = 'LibMovable-1.0', 37
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 
@@ -345,7 +345,7 @@ function proto.UpdateDisplay(overlay, inCombat)
 		connector:SetVertexColor(r, g, b, 1)
 		local sx, sy = GetPointCoord(target, from)
 		local ex, ey = GetPointCoord(refFrame, to)
-		DrawRouteLine(connector, overlay, 0, 0, (ex-sx) / scale, (ey-sy) / scale, 32, from)
+		DrawLine(connector, overlay, 0, 0, (ex-sx) / scale, (ey-sy) / scale, 32, 32/30, from)
 	else
 		connector:SetTexture(r, g, b, 0.7)
 		connector:ClearAllPoints()
