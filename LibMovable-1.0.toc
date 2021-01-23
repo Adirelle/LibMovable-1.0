@@ -1,4 +1,4 @@
-## Interface: 70000
+## Interface: 90002
 
 ## Title: Lib: Movable-1.0
 ## Notes: Movable frame library.
